@@ -1,10 +1,10 @@
 # Amazon Managed Grafana Migrator
 
-Amazon Managed Grafana Migrator is a migration utility to help migrate Grafana's
+Amazon Managed Grafana Migrator is a CLI migration utility to migrate Grafana
 content (data sources, dashboards, folders and alert rules) to Amazon Managed
-Grafana.
+Grafana. It supports the following migration scenarios:
 
-- Migrating from and to Amazon Managed Grafana Workspace (copy workspace contents)
+- Migrating from and to Amazon Managed Grafana Workspace (eg. Moving to v9.4)
 - Migrating from a Grafana server to an Amazon Managed Grafana Workspace
 
 :warning: Alerting rules migration are only supported in Amazon Managed Grafana
@@ -52,11 +52,12 @@ amazon-managed-grafana-migrator --help
 amazon-managed-grafana-migrator migrate --help
 ```
 
+
 ## Contributing
 
 See [CONTRIBUTING](CONTRIBUTING.md) for more information.
 
+
 ## License
 
 This project is licensed under the Apache-2.0 License.
-
