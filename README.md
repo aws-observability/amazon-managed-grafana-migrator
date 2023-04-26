@@ -48,7 +48,7 @@ amazon-managed-grafana-migrator migrate \
 
 ### Getting help
 
-```bash
+```console
 amazon-managed-grafana-migrator --help
 
 # command specific help
