@@ -1,12 +1,13 @@
 package grafana
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/grafana/mocks"
 	"bytes"
 	"errors"
 	"io"
 	"net/http"
 	"testing"
+
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/grafana/mocks"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

@@ -2,8 +2,8 @@
 package app
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/grafana"
-	"amazon-managed-grafana-migrator/internal/pkg/log"
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/grafana"
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 
 	gapi "github.com/grafana/grafana-api-golang-client"
 )

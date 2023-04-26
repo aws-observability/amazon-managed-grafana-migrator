@@ -1,11 +1,12 @@
 package app
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/aws"
-	"amazon-managed-grafana-migrator/internal/pkg/log"
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws"
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 
 	gapi "github.com/grafana/grafana-api-golang-client"
 )
