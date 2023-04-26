@@ -1,4 +1,4 @@
-module amazon-managed-grafana-migrator
+module github.com/aws-observability/amazon-managed-grafana-migrator
 
 go 1.19
 
