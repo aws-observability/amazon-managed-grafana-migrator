@@ -19,7 +19,6 @@ func TestRules_AllRuleGroups(t *testing.T) {
 		expectedRuleGroups int
 		expectedError      error
 	}{
-		//TODO: sample json unmarshall
 		"success": {
 			callMock: func(m *mocks.MockHTTPClient) {
 				json := `{"Folder": [{"name": "rulegroup", "interval": "1m"}]}`
