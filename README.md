@@ -1,6 +1,7 @@
 # Amazon Managed Grafana Migrator
 
 [![Build](https://github.com/aws-observability/amazon-managed-grafana-migrator/actions/workflows/go.yml/badge.svg)](https://github.com/aws-observability/amazon-managed-grafana-migrator/actions/workflows/go.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aws-observability/amazon-managed-grafana-migrator)](https://goreportcard.com/report/github.com/aws-observability/amazon-managed-grafana-migrator)
 
 Amazon Managed Grafana Migrator is a CLI migration utility to migrate Grafana
 content (data sources, dashboards, folders and alert rules) to Amazon Managed
