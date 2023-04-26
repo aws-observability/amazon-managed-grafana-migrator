@@ -36,7 +36,7 @@ amazon-managed-grafana-migrator migrate \
 
 ### Migrating to Amazon Managed Grafana
 
-```bash
+```console
 amazon-managed-grafana-migrator migrate \
   --src-url https://grafana.example.com/
   --src-api-key API_KEY_HERE
