@@ -1,11 +1,12 @@
 package app
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/aws"
-	"amazon-managed-grafana-migrator/internal/pkg/aws/mocks"
 	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws"
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws/mocks"
 
 	awssdk "github.com/aws/aws-sdk-go/aws"
 

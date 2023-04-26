@@ -2,10 +2,11 @@
 package cli
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/aws"
-	"amazon-managed-grafana-migrator/internal/pkg/log"
 	"errors"
 	"os"
+
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws"
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/spf13/cobra"

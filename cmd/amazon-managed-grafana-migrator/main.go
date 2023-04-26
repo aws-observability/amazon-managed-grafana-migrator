@@ -2,10 +2,10 @@
 package main
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/cli"
-	"amazon-managed-grafana-migrator/internal/pkg/log"
 	"os"
 
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/cli"
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 	"github.com/spf13/cobra"
 )
 

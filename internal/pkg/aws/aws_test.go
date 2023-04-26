@@ -1,9 +1,10 @@
 package aws
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/aws/mocks"
 	"errors"
 	"testing"
+
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws/mocks"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/managedgrafana"

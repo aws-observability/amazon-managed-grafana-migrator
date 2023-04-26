@@ -1,9 +1,10 @@
 package app
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/app/mocks"
 	"errors"
 	"testing"
+
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/app/mocks"
 
 	"github.com/golang/mock/gomock"
 	gapi "github.com/grafana/grafana-api-golang-client"

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"amazon-managed-grafana-migrator/internal/pkg/log"
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 )
 
 // migrateDataSources recreates data sources from source workspace

@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	grafana "amazon-managed-grafana-migrator/internal/pkg/grafana"
+	grafana "github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/grafana"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
