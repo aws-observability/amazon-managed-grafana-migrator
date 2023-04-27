@@ -55,6 +55,36 @@ amazon-managed-grafana-migrator --help
 amazon-managed-grafana-migrator migrate --help
 ```
 
+## Permissions
+
+To run this tool you need AWS permissions through IAM. Make sure you have the
+AWS command line tool installed and have already run `aws configure` before you
+start. Below are the minimum permissions required by the tool:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "grafana:DeleteWorkspaceApiKey",
+                "grafana:DescribeWorkspace",
+                "grafana:CreateWorkspaceApiKey"
+            ],
+            "Resource": "arn:aws:grafana:*:<ACCOUNT_ID>:/workspaces/<WORKSPACE_ID>"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "grafana:ListWorkspaces",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+If you a migrating from a Grafana server, you will need an active API Key with
+"ADMIN" role.
 
 ## Contributing
 
