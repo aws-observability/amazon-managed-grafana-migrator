@@ -24,7 +24,10 @@ type api interface {
 type App struct {
 	// Grafana api clients for source and destination workspaces
 	Src, Dst api
+	// SrcInput GrafanaInput
 }
+
+// const minAlertingMigrationVersion = 9.4
 
 // Run orchestrates the migration of grafana contents
 // TODO: allow specifiying what to migrate or all (dashboard, ...)
@@ -48,14 +51,18 @@ func (a *App) Run(srcCustomGrafanaClient CustomGrafanaClient) error {
 	if err != nil {
 		return err
 	}
-	log.Success("Successfully migrated ", dashboards, " dashboards")
+	log.Success("Migrated ", dashboards, " dashboards")
 	log.Info()
 
 	//TODO: restrict alert migration to v9.4 dest
+	// if strconv.ParseFloat(srcGrafanaVersion, 64) < minAlertingMigrationVersion {
+	// 	log.Debug("Skipping alert migration for version", a.Dst.GrafanaVersion)
+	// }
+
 	alertsMigrated, err := a.migrateAlertRules(fx, srcCustomGrafanaClient)
 	if err != nil {
 		return err
 	}
-	log.Success("Successfully migrated ", alertsMigrated, " alerts")
+	log.Success("Migrated ", alertsMigrated, " alerts")
 	return nil
 }
