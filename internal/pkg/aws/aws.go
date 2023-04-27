@@ -76,7 +76,7 @@ func (a *AMG) ListWorkspaces() ([]Workspace, error) {
 //revive:disable
 func (a *AMG) CreateWorkspaceApiKey(workspaceID string) (AMGApiKey, error) {
 	currentTime := time.Now().UTC()
-	keyName := fmt.Sprintf("%s-%d", "pelican", currentTime.UnixMilli())
+	keyName := fmt.Sprintf("%s-%d", "amg-migrator", currentTime.UnixMilli())
 
 	duration := time.Duration(5 * 60 * time.Second)
 	resp, err := a.Client.CreateWorkspaceApiKey(&managedgrafana.CreateWorkspaceApiKeyInput{

@@ -1,2 +1,7 @@
 amazon-managed-grafana-migrator
 run_unit.sh
+teardown.sh
+
+# unit tests
+coverage.out
+coverage_badge.png

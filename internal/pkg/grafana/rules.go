@@ -6,7 +6,7 @@ import "time"
 type RuleGroup struct {
 	Name     string      `json:"name"`
 	Interval string      `json:"interval"`
-	Rules    []AlertRule `json:"rules"`
+	Rules    []AlertRule `json:"rules,omitempty"`
 }
 
 // AlertRule contains Grafana alert rule
@@ -21,12 +21,12 @@ type AlertRule struct {
 
 // Alert contains a Grafana alert data
 type Alert struct {
-	ID        int           `json:"id"`
-	OrgID     int           `json:"orgId"`
-	Title     string        `json:"title"`
-	Condition string        `json:"condition"`
-	Data      []*AlertQuery `json:"data"`
-	Updated   time.Time     `json:"updated"`
+	ID        int          `json:"id"`
+	OrgID     int          `json:"orgId"`
+	Title     string       `json:"title"`
+	Condition string       `json:"condition"`
+	Data      []AlertQuery `json:"data,omitempty"`
+	Updated   time.Time    `json:"updated"`
 	// IntervalSeconds is in seconds
 	IntervalSeconds int    `json:"intervalSeconds"`
 	Version         int    `json:"version"`

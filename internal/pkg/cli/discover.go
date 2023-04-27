@@ -1,4 +1,4 @@
-// Package cli provides the pelican CLI
+// Package cli provides the CLI
 package cli
 
 import (

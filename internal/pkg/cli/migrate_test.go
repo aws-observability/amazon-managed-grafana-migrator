@@ -32,7 +32,7 @@ import (
 
 // 			//expected result should be
 // 			expectedResult: amg.AMGApiKey{
-// 				KeyName:     "pelican-",
+// 				KeyName:     "amg-migrator-",
 // 				APIKey:      "fakeAPIKey",
 // 				WorkspaceID: "g-abcdef1234",
 // 			},
