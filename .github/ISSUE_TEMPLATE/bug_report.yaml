@@ -27,8 +27,8 @@ body:
     attributes:
       label: Release version
       description: |
-        You should **not** use `latest` as it might be unstable. Please use
-        release tags `v0.x.x`. Enter release number!
+        `amazon-managed-grafana-migrator --version`. You can suffix `go install`
+        with your desired version using git tags.
       placeholder: Your version here.
     validations:
       required: true
