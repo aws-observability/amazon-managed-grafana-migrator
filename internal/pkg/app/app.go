@@ -27,6 +27,7 @@ type App struct {
 }
 
 // Run orchestrates the migration of grafana contents
+// TODO: allow specifiying what to migrate or all (dashboard, ...)
 func (a *App) Run(srcCustomGrafanaClient CustomGrafanaClient) error {
 	log.Info()
 	migratedDs, err := a.migrateDataSources()
@@ -50,6 +51,7 @@ func (a *App) Run(srcCustomGrafanaClient CustomGrafanaClient) error {
 	log.Success("Successfully migrated ", dashboards, " dashboards")
 	log.Info()
 
+	//TODO: restrict alert migration to v9.4 dest
 	alertsMigrated, err := a.migrateAlertRules(fx, srcCustomGrafanaClient)
 	if err != nil {
 		return err

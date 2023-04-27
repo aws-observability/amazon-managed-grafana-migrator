@@ -31,7 +31,7 @@ func (a *App) migrateAlertRules(folders []gapi.Folder, customGrafanaClient Custo
 	for folder, ruleGroups := range ruleGroups {
 		// search for folder uid from name
 		uid := searchFolderUID(&folders, folder)
-		log.Debug("Folder = ", folder, ", UID = ", uid)
+		// log.Debug("Folder = ", folder, ", UID = ", uid)
 
 		for _, rg := range ruleGroups {
 			for _, r := range rg.Rules {
@@ -52,22 +52,27 @@ func (a *App) migrateAlertRules(folders []gapi.Folder, customGrafanaClient Custo
 }
 
 func convertAlertRule(rule grafana.AlertRule, folderUID string) gapi.AlertRule {
-	//TODO: iterate on inner data struct
-	return gapi.AlertRule{
-		Annotations: rule.Annotations,
-		Condition:   rule.Alert.Condition,
-		Data: []*gapi.AlertQuery{
-			{
-				DatasourceUID: rule.Alert.Data[0].DatasourceUID,
-				Model:         rule.Alert.Data[0].Model,
-				QueryType:     rule.Alert.Data[0].QueryType,
-				RefID:         rule.Alert.Data[0].RefID,
+	ax := make([]*gapi.AlertQuery, 0)
+
+	for _, d := range rule.Alert.Data {
+		if rule.Alert.Data != nil {
+			ax = append(ax, &gapi.AlertQuery{
+				DatasourceUID: d.DatasourceUID,
+				Model:         d.Model,
+				QueryType:     d.QueryType,
+				RefID:         d.RefID,
 				RelativeTimeRange: gapi.RelativeTimeRange{
-					From: rule.Alert.Data[0].RelativeTimeRange.From,
-					To:   rule.Alert.Data[0].RelativeTimeRange.To,
+					From: d.RelativeTimeRange.From,
+					To:   d.RelativeTimeRange.To,
 				},
-			},
-		},
+			})
+		}
+	}
+
+	return gapi.AlertRule{
+		Annotations:  rule.Annotations,
+		Condition:    rule.Alert.Condition,
+		Data:         ax,
 		FolderUID:    folderUID,
 		RuleGroup:    rule.Alert.RuleGroup,
 		Title:        rule.Alert.Title,

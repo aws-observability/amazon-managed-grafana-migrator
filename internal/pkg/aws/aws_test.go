@@ -14,7 +14,7 @@ import (
 
 func getFakeAPIKey(_ *testing.T) AMGApiKey {
 	return AMGApiKey{
-		KeyName:     "pelican-", //keyname has a currentime millisecond suffix
+		KeyName:     "amg-migrator-", //keyname has a currentime millisecond suffix
 		APIKey:      "fakekey",
 		WorkspaceID: "g-abcdef1234",
 	}

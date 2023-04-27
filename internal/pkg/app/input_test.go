@@ -183,7 +183,7 @@ func TestInput_CreateGrafanaAPIClient(t *testing.T) {
 					WorkspaceId: awssdk.String("g-abcdef1234"),
 				}, nil).AnyTimes()
 				m.EXPECT().DeleteWorkspaceApiKey(gomock.Any()).Return(&managedgrafana.DeleteWorkspaceApiKeyOutput{
-					KeyName:     awssdk.String("pelican-"),
+					KeyName:     awssdk.String("amg-migrator-"),
 					WorkspaceId: awssdk.String("g-abcdef1234"),
 				}, nil).AnyTimes()
 			},
@@ -240,20 +240,6 @@ func TestInput_DeleteAPIKeys(t *testing.T) {
 			},
 			expectedError: nil,
 		},
-		// "amg client": {
-		// 	input: generateGrafanaInput(t, true),
-		// 	callMock: func(m *mocks.Mockapi) {
-		// 		m.EXPECT().CreateWorkspaceApiKey(gomock.Any()).Return(&managedgrafana.CreateWorkspaceApiKeyOutput{
-		// 			Key:         awssdk.String("fakekey"),
-		// 			WorkspaceId: awssdk.String("g-abcdef1234"),
-		// 		}, nil).AnyTimes()
-		// 		m.EXPECT().DeleteWorkspaceApiKey(gomock.Any()).Return(&managedgrafana.DeleteWorkspaceApiKeyOutput{
-		// 			KeyName:     awssdk.String("pelican-"),
-		// 			WorkspaceId: awssdk.String("g-abcdef1234"),
-		// 		}, nil).AnyTimes()
-		// 	},
-		// 	expectedError: nil,
-		// },
 	}
 
 	for name, tc := range tests {
