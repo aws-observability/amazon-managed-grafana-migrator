@@ -5,6 +5,7 @@ package grafana
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -61,7 +62,7 @@ func (c *Client) get(requestPath string, responseStruct interface{}) error {
 
 	err = json.Unmarshal(bodyContents, responseStruct)
 	if err != nil {
-		return err
+		return errors.New("alerting API version not supported for src, minimum supported is v8.4")
 	}
 
 	return nil

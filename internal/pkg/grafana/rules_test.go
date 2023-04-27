@@ -47,7 +47,7 @@ func TestRules_AllRuleGroups(t *testing.T) {
 				).AnyTimes()
 			},
 			expectedRuleGroups: 0,
-			expectedError:      errors.New("json: cannot unmarshal string into Go value of type []grafana.RuleGroup"),
+			expectedError:      errors.New("alerting API version not supported for src, minimum supported is v8.4"),
 		},
 		"http error": {
 			callMock: func(m *mocks.MockHTTPClient) {
