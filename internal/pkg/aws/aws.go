@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/managedgrafana"
@@ -78,6 +79,8 @@ func (a *AMG) CreateWorkspaceApiKey(workspaceID string) (AMGApiKey, error) {
 	currentTime := time.Now().UTC()
 	keyName := fmt.Sprintf("%s-%d", "amg-migrator", currentTime.UnixMilli())
 
+	log.Debug("Creating temporary API key for ", workspaceID)
+
 	duration := time.Duration(5 * 60 * time.Second)
 	resp, err := a.Client.CreateWorkspaceApiKey(&managedgrafana.CreateWorkspaceApiKeyInput{
 		KeyName:       aws.String(keyName),
@@ -95,13 +98,16 @@ func (a *AMG) CreateWorkspaceApiKey(workspaceID string) (AMGApiKey, error) {
 
 // DeleteWorkspaceApiKey deletes an API key for a workspace
 func (a *AMG) DeleteWorkspaceApiKey(apiKey AMGApiKey) error {
+	log.Info()
+	log.Debug("Removing temporary API key for ", apiKey.WorkspaceID)
+
 	_, err := a.Client.DeleteWorkspaceApiKey(&managedgrafana.DeleteWorkspaceApiKeyInput{
 		KeyName:     aws.String(apiKey.KeyName),
 		WorkspaceId: aws.String(apiKey.WorkspaceID),
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		log.Error(err)
 	}
 	return err
 }

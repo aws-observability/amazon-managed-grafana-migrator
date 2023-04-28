@@ -65,7 +65,6 @@ func (input *GrafanaInput) getAPIKey(awsgrafanacli *aws.AMG) (aws.AMGApiKey, err
 		}, nil
 	}
 
-	log.Debug("Creating temporary API key for ", input.WorkspaceID)
 	key, err := awsgrafanacli.CreateWorkspaceApiKey(input.WorkspaceID)
 	if err != nil {
 		return key, err
