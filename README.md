@@ -10,16 +10,17 @@ Grafana. It supports the following migration scenarios:
 - Migrating from and to Amazon Managed Grafana Workspace (eg. Moving to v9.4)
 - Migrating from a Grafana server to an Amazon Managed Grafana Workspace
 
+<img src="https://user-images.githubusercontent.com/10175027/235176809-9b71af1a-79a9-416a-b26e-ccdf725779d7.gif" width="80%" height="80%"/>
+
+
 :warning: Alerting rules migration are only supported in Amazon Managed Grafana
 v9.4
-
 
 ## Build
 
 ```console
 go install github.com/aws-observability/amazon-managed-grafana-migrator@latest
 ```
-
 
 ## Usage
 
