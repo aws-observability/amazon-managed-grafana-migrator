@@ -16,11 +16,16 @@ Grafana. It supports the following migration scenarios:
 :warning: Alerting rules migration are only supported in Amazon Managed Grafana
 v9.4
 
-## Build
+## Installation
+
+Build from latest release. This requires Go installed on your environement.
 
 ```console
 go install github.com/aws-observability/amazon-managed-grafana-migrator@latest
 ```
+
+You can also download the pre-compiled binary for your OS and CPU architecture
+from our [GitHub releases](https://github.com/aws-observability/amazon-managed-grafana-migrator/releases/latest).
 
 ## Usage
 
