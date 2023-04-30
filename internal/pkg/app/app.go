@@ -30,7 +30,7 @@ type App struct {
 // const minAlertingMigrationVersion = 9.4
 
 // Run orchestrates the migration of grafana contents
-// TODO: allow specifiying what to migrate or all (dashboard, ...)
+// TODO: allow specifying what to migrate or all (dashboard, ...)
 func (a *App) Run(srcCustomGrafanaClient CustomGrafanaClient) error {
 	log.Info()
 	migratedDs, err := a.migrateDataSources()
