@@ -62,10 +62,10 @@ func (a *AMG) ListWorkspaces() ([]Workspace, error) {
 
 	for _, workspace := range response.Workspaces {
 		w := Workspace{
-			ID:       *workspace.Id,
-			Name:     *workspace.Name,
-			Version:  *workspace.GrafanaVersion,
-			Endpoint: *workspace.Endpoint,
+			ID:       aws.StringValue(workspace.Id),
+			Name:     aws.StringValue(workspace.Name),
+			Version:  aws.StringValue(workspace.GrafanaVersion),
+			Endpoint: aws.StringValue(workspace.Endpoint),
 		}
 		wx = append(wx, w)
 	}
