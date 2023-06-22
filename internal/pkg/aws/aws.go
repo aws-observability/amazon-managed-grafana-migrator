@@ -81,7 +81,7 @@ func (a *AMG) CreateWorkspaceApiKey(workspaceID string) (AMGApiKey, error) {
 
 	log.Debug("Creating temporary API key for ", workspaceID)
 
-	duration := time.Duration(5 * 60 * time.Second)
+	duration := time.Duration(30 * 60 * time.Second)
 	resp, err := a.Client.CreateWorkspaceApiKey(&managedgrafana.CreateWorkspaceApiKeyInput{
 		KeyName:       aws.String(keyName),
 		KeyRole:       aws.String("ADMIN"),
