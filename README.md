@@ -24,6 +24,10 @@ Build from latest release. This requires Go installed on your environement.
 go install github.com/aws-observability/amazon-managed-grafana-migrator@latest
 ```
 
+This command above will build the binary into your Go path `($HOME/go/bin)`.
+Make sure to add your Go bin in your $PATH to run the command.
+For Linux, this is usually `export PATH=$PATH:$HOME/go/bin`.
+
 You can also download the pre-compiled binary for your OS and CPU architecture
 from our [GitHub releases](https://github.com/aws-observability/amazon-managed-grafana-migrator/releases/latest).
 
