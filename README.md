@@ -3,11 +3,13 @@
 [![Build](https://github.com/aws-observability/amazon-managed-grafana-migrator/actions/workflows/go.yml/badge.svg)](https://github.com/aws-observability/amazon-managed-grafana-migrator/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aws-observability/amazon-managed-grafana-migrator)](https://goreportcard.com/report/github.com/aws-observability/amazon-managed-grafana-migrator)
 
+Jul-19: [Amazon Grafana supports now in-place update from v8.4 to v9.4](https://aws.amazon.com/about-aws/whats-new/2023/07/amazon-managed-grafana-in-place-update-version-9-4/)
+
 Amazon Managed Grafana Migrator is a CLI migration utility to migrate Grafana
 content (data sources, dashboards, folders and alert rules) to Amazon Managed
 Grafana. It supports the following migration scenarios:
 
-- Migrating from and to Amazon Managed Grafana Workspace (eg. Moving to v9.4)
+- Migrating from and to Amazon Managed Grafana Workspace (eg. Moving to v9.4), although consider using the native functionality in the AWS Console
 - Migrating from a Grafana server to an Amazon Managed Grafana Workspace
 
 <img src="https://user-images.githubusercontent.com/10175027/235176809-9b71af1a-79a9-416a-b26e-ccdf725779d7.gif" width="80%" height="80%"/>
