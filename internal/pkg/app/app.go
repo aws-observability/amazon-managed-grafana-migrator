@@ -59,10 +59,13 @@ func (a *App) Run(srcCustomGrafanaClient CustomGrafanaClient) error {
 	// 	log.Debug("Skipping alert migration for version", a.Dst.GrafanaVersion)
 	// }
 
+	log.Info("Skipping alert rules migration")
+	/*
 	alertsMigrated, err := a.migrateAlertRules(fx, srcCustomGrafanaClient)
 	if err != nil {
 		return err
 	}
 	log.Success("Migrated ", alertsMigrated, " alerts")
+	*/
 	return nil
 }

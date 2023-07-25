@@ -3,6 +3,7 @@
 [![Build](https://github.com/aws-observability/amazon-managed-grafana-migrator/actions/workflows/go.yml/badge.svg)](https://github.com/aws-observability/amazon-managed-grafana-migrator/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aws-observability/amazon-managed-grafana-migrator)](https://goreportcard.com/report/github.com/aws-observability/amazon-managed-grafana-migrator)
 
+🚨 Jul-25: Alerts migration are currently disabled with v0.1.9. See [#19](https://github.com/aws-observability/amazon-managed-grafana-migrator/issues/19)
 
 🎉 Jul-19: [Amazon Grafana supports now in-place update from v8.4 to v9.4](https://aws.amazon.com/about-aws/whats-new/2023/07/amazon-managed-grafana-in-place-update-version-9-4/)
 
