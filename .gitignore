@@ -5,3 +5,6 @@ teardown.sh
 # unit tests
 coverage.out
 coverage_badge.png
+
+# vscode
+.vscode
