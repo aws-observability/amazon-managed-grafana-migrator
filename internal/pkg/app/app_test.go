@@ -53,9 +53,22 @@ func mockNewFolder(_ *testing.T, m *mocks.Mockapi) {
 		URL:   "http://test.com",
 	}
 	m.EXPECT().NewFolder(f.Title, f.UID).Return(
+		f, nil,
+	)
+}
+
+func mockNewFolderWithError(_ *testing.T, m *mocks.Mockapi) {
+	f := gapi.Folder{
+		ID:    1,
+		UID:   "uid",
+		Title: "test",
+		URL:   "http://test.com",
+	}
+	m.EXPECT().NewFolder(f.Title, f.UID).Return(
 		gapi.Folder{}, errors.New("some error while creating folder in dest"),
 	)
 }
+
 func mockDashboards(_ *testing.T, m *mocks.Mockapi) {
 	dsResponse := gapi.FolderDashboardSearchResponse{
 		FolderID:  1,

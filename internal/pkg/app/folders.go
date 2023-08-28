@@ -6,7 +6,17 @@ import (
 	gapi "github.com/grafana/grafana-api-golang-client"
 )
 
-func (a *App) migrateFolders() ([]gapi.Folder, error) {
+// FoldersResponse holds both folders in the source and destination Grafana
+type FoldersResponse struct {
+	SrcFolders      []gapi.Folder
+	MigratedFolders []gapi.Folder
+}
+
+// migrateFolders retrieve folders from source Grafana and use the api to
+// create them in the destination. We keep a copy of the source folders
+// in case the API fails to create one or more folders (because, it already
+// exists for example)
+func (a *App) migrateFolders() (*FoldersResponse, error) {
 	log.Info()
 	log.Info("Migrating folders:")
 
@@ -22,10 +32,11 @@ func (a *App) migrateFolders() ([]gapi.Folder, error) {
 		newF, err := a.Dst.NewFolder(f.Title, f.UID)
 		if err != nil {
 			log.Debugf("\terror: %s [%s]\n", f.Title, err)
+		} else {
+			newFx = append(newFx, newF)
 		}
-		newFx = append(newFx, newF)
 	}
-	return newFx, nil
+	return &FoldersResponse{fx, newFx}, nil
 }
 
 // From a list of folders, get a folder ID (used with destination folders)

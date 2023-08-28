@@ -33,7 +33,8 @@ func TestApp_migrateFolders(t *testing.T) {
 	tests := map[string]struct {
 		callMockSrc     func(m *mocks.Mockapi)
 		callMockDst     func(m *mocks.Mockapi)
-		expectedFolders int
+		migratedFolders int
+		sourceFolders   int
 		expectedError   error
 	}{
 		"error getting folders from src": {
@@ -41,8 +42,20 @@ func TestApp_migrateFolders(t *testing.T) {
 				m.EXPECT().Folders().Return(nil, errors.New("some error")).AnyTimes()
 			},
 			callMockDst:     func(m *mocks.Mockapi) {},
-			expectedFolders: 0,
+			migratedFolders: 0,
+			sourceFolders:   0,
 			expectedError:   errors.New("some error"),
+		},
+		"syncing one folder with error": {
+			callMockSrc: func(m *mocks.Mockapi) {
+				mockFolder(t, m)
+			},
+			callMockDst: func(m *mocks.Mockapi) {
+				mockNewFolderWithError(t, m)
+			},
+			migratedFolders: 0,
+			sourceFolders:   1,
+			expectedError:   nil,
 		},
 		"syncing one folder": {
 			callMockSrc: func(m *mocks.Mockapi) {
@@ -51,7 +64,8 @@ func TestApp_migrateFolders(t *testing.T) {
 			callMockDst: func(m *mocks.Mockapi) {
 				mockNewFolder(t, m)
 			},
-			expectedFolders: 1,
+			migratedFolders: 1,
+			sourceFolders:   1,
 			expectedError:   nil,
 		},
 	}
@@ -80,7 +94,8 @@ func TestApp_migrateFolders(t *testing.T) {
 				require.EqualError(t, err, tc.expectedError.Error())
 			} else {
 				require.NoError(t, err)
-				require.Len(t, fx, tc.expectedFolders)
+				require.Len(t, fx.SrcFolders, tc.sourceFolders)
+				require.Len(t, fx.MigratedFolders, tc.migratedFolders)
 			}
 		})
 	}
