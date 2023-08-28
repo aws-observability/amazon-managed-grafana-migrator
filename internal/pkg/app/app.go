@@ -39,15 +39,13 @@ func (a *App) Run(srcCustomGrafanaClient CustomGrafanaClient) error {
 	}
 	log.Success("Migrated ", migratedDs, " data sources")
 
-	fx, err := a.migrateFolders()
+	foldersResponse, err := a.migrateFolders()
 	if err != nil {
 		return err
 	}
-	log.Success("Migrated ", len(fx), " folders")
+	log.Success("Migrated ", len(foldersResponse.MigratedFolders), " folders")
 
-	// TODO: if there's an error on migrateFolders, query dashboard IDs in dst
-	// This will ensure that the migration is not partially completed
-	dashboards, err := a.migrateDashboards(&fx)
+	dashboards, err := a.migrateDashboards(&foldersResponse.SrcFolders)
 	if err != nil {
 		return err
 	}
