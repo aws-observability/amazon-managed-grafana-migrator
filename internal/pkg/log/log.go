@@ -17,10 +17,11 @@ var (
 
 // Colored string formatting functions.
 var (
-	successSprintf = color.HiGreenString
-	errorSprintf   = color.HiRedString
-	warningSprintf = color.YellowString
-	debugSprintf   = color.New(color.Faint).Sprintf
+	successSprintf   = color.HiGreenString
+	errorSprintf     = color.HiRedString
+	warningSprintf   = color.YellowString
+	debugSprintf     = color.New(color.Faint).Sprintf
+	infoLightSprintf = color.New(color.Faint).Sprintf
 )
 
 // Log message prefixes.
@@ -58,6 +59,15 @@ func error(w io.Writer, args ...interface{}) {
 	fmt.Fprintln(w, msg)
 }
 
+// Errorf writes the message to standard error with the default color.
+func Errorf(format string, args ...interface{}) {
+	errorf(DiagnosticWriter, format, args...)
+}
+
+func errorf(w io.Writer, format string, args ...interface{}) {
+	fmt.Fprint(w, errorSprintf(format, args...))
+}
+
 // Success prefixes the message with a green "✔ Success!", and writes to standard error with a new line.
 func Success(args ...interface{}) {
 	success(DiagnosticWriter, args...)
@@ -69,11 +79,23 @@ func success(w io.Writer, args ...interface{}) {
 }
 
 // Debug writes the message to standard error in grey and with a new line.
-func Debug(args ...interface{}) {
+func Debug(verbose bool, args ...interface{}) {
+	if !verbose {
+		return
+	}
 	debug(DiagnosticWriter, args...)
 }
 
 func debug(w io.Writer, args ...interface{}) {
+	fmt.Fprintln(w, "[DEBUG] ", debugSprintf(fmt.Sprint(args...)))
+}
+
+// InfoLight writes the message to standard error in grey and with a new line.
+func InfoLight(args ...interface{}) {
+	infoLight(DiagnosticWriter, args...)
+}
+
+func infoLight(w io.Writer, args ...interface{}) {
 	fmt.Fprintln(w, debugSprintf(fmt.Sprint(args...)))
 }
 
@@ -87,10 +109,22 @@ func warning(w io.Writer, args ...interface{}) {
 }
 
 // Debugf formats according to the specifier, colors the message in grey, and writes to standard error.
-func Debugf(format string, args ...interface{}) {
+func Debugf(verbose bool, format string, args ...interface{}) {
+	if !verbose {
+		return
+	}
 	debugf(DiagnosticWriter, format, args...)
 }
 
 func debugf(w io.Writer, format string, args ...interface{}) {
-	fmt.Fprint(w, debugSprintf(format, args...))
+	fmt.Fprint(w, infoLightSprintf(format, args...))
+}
+
+// InfoLightf formats according to the specifier, colors the message in grey, and writes to standard error.
+func InfoLightf(format string, args ...interface{}) {
+	infoLightf(DiagnosticWriter, format, args...)
+}
+
+func infoLightf(w io.Writer, format string, args ...interface{}) {
+	fmt.Fprint(w, infoLightSprintf(format, args...))
 }

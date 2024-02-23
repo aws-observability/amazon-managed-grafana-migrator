@@ -36,13 +36,13 @@ func (a *App) migrateAlertRules(folders []gapi.Folder, customGrafanaClient Custo
 		for _, rg := range ruleGroups {
 			for _, r := range rg.Rules {
 				gapiR := convertAlertRule(r, uid)
-				log.Debugf("Alerting rule: %s\n", gapiR.Title)
+				log.InfoLightf("Alerting rule: %s\n", gapiR.Title)
 
 				_, err := a.Dst.NewAlertRule(&gapiR)
 				if err == nil {
 					migratedAlertRules++
 				} else {
-					log.Debug("Error creating alerting rule: ", err)
+					log.InfoLightf("Error creating alerting rule: ", err)
 				}
 			}
 		}

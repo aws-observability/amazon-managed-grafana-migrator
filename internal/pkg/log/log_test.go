@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const verbose = false
+
 func TestInfo(t *testing.T) {
 
 	b := &strings.Builder{}
@@ -62,7 +64,7 @@ func TestDebug(t *testing.T) {
 	DiagnosticWriter = b
 
 	// WHEN
-	Debug("hello", " world")
+	Debug(verbose, "hello", " world")
 
 	// THEN
 	require.Contains(t, b.String(), "hello world\n")
@@ -87,7 +89,7 @@ func TestDebugf(t *testing.T) {
 	DiagnosticWriter = b
 
 	// WHEN
-	Debugf("%s %s\n", "hello", "world")
+	Debugf(verbose, "%s %s\n", "hello", "world")
 
 	// THEN
 	require.Contains(t, b.String(), "hello world\n")

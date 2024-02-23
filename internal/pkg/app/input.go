@@ -18,8 +18,7 @@ type GrafanaInput struct {
 	APIKey      string
 	Region      string
 	IsAMG       bool
-	//TODO: remove
-	IsGamma bool
+	IsGamma     bool
 }
 
 // GrafanaHTTPClient contains the grafana client and AWS API key
@@ -59,7 +58,7 @@ func NewGrafanaInput(wkspEndpoint, url, apiKey string) (GrafanaInput, error) {
 func (input *GrafanaInput) getAPIKey(awsgrafanacli *aws.AMG) (aws.AMGApiKey, error) {
 
 	if !input.IsAMG {
-		log.Debug("Skipping API key creation for ", input.URL)
+		log.InfoLight("Skipping API key creation for ", input.URL)
 		return aws.AMGApiKey{
 			APIKey: input.APIKey,
 		}, nil
