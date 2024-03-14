@@ -22,7 +22,7 @@ Managed Grafana v9.4. (migrating alerts to v8.x is not supported)
 
 ## Installation
 
-Build from latest release. This requires Go installed on your environement.
+Build from latest release. This requires Go (1.21 +) installed on your environement.
 
 ```console
 go install github.com/aws-observability/amazon-managed-grafana-migrator@latest
@@ -34,6 +34,15 @@ For Linux, this is usually `export PATH=$PATH:$HOME/go/bin`.
 
 You can also download the pre-compiled binary for your OS and CPU architecture
 from our [GitHub releases](https://github.com/aws-observability/amazon-managed-grafana-migrator/releases/latest).
+
+Example on Amazon Linux:
+
+```console
+wget https://github.com/aws-observability/amazon-managed-grafana-migrator/releases/download/v0.1.11/amazon-managed-grafana-migrator-linux-amd64.tar.gz
+tar -zxvf amazon-managed-grafana-migrator-linux-amd64.tar.gz
+sudo mv amazon-managed-grafana-migrator /usr/local/bin/
+amazon-managed-grafana-migrator -v
+```
 
 ## Usage
 
