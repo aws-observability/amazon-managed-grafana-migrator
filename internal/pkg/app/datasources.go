@@ -16,9 +16,9 @@ func (a *App) migrateDataSources() (int, error) {
 	migratedDs := 0
 
 	for _, ds := range dsx {
-		log.Debugf("Data source: %s\n", ds.Name)
+		log.InfoLightf("Data source: %s\n", ds.Name)
 		if _, err := a.Dst.NewDataSource(ds); err != nil {
-			log.Debugf("\twarning: %s\n", err)
+			log.InfoLightf("\terror: %s\n", err)
 			continue
 		}
 		migratedDs++

@@ -10,6 +10,7 @@ import (
 type FoldersResponse struct {
 	SrcFolders      []gapi.Folder
 	MigratedFolders []gapi.Folder
+	AllDstFolders   []gapi.Folder
 }
 
 // migrateFolders retrieve folders from source Grafana and use the api to
@@ -24,19 +25,24 @@ func (a *App) migrateFolders() (*FoldersResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf(a.Verbose, "Source Grafana folders found: %d\n", len(fx))
+	log.Debug(a.Verbose, fx)
 
 	newFx := []gapi.Folder{}
 
 	for _, f := range fx {
-		log.Debugf("Folder: %s\n", f.Title)
+		log.InfoLightf("Folder: %s\n", f.Title)
 		newF, err := a.Dst.NewFolder(f.Title, f.UID)
 		if err != nil {
-			log.Debugf("\terror: %s [%s]\n", f.Title, err)
+			log.Errorf("\terror: %s [%s]\n", f.Title, err)
 		} else {
 			newFx = append(newFx, newF)
 		}
 	}
-	return &FoldersResponse{fx, newFx}, nil
+
+	allDstFolders, _ := a.Dst.Folders()
+
+	return &FoldersResponse{fx, newFx, allDstFolders}, nil
 }
 
 // From a list of folders, get a folder ID (used with destination folders)

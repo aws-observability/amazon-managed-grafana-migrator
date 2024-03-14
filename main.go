@@ -11,7 +11,7 @@ import (
 
 const (
 	shortDescription = "Amazon Managed Grafana migration utility"
-	version          = "0.1.10"
+	version          = "0.1.11"
 )
 
 var region string

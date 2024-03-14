@@ -12,9 +12,10 @@ import (
 
 var (
 	src, srcURL, srcAPIKey, dst string
+	verbose                     bool
 )
 
-func migrate(src, dst app.GrafanaInput) error {
+func migrate(src, dst app.GrafanaInput, verbose bool) error {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -46,7 +47,7 @@ func migrate(src, dst app.GrafanaInput) error {
 		return err
 	}
 
-	migrate := app.App{Src: srcGrafanaClient.Client, Dst: dstGrafanaClient.Client}
+	migrate := app.App{Src: srcGrafanaClient.Client, Dst: dstGrafanaClient.Client, Verbose: verbose}
 	return migrate.Run(app.CustomGrafanaClient{Client: customClient})
 }
 
@@ -66,7 +67,7 @@ func BuildMigrateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return migrate(src, dst)
+			return migrate(src, dst, verbose)
 		}),
 	}
 
@@ -78,5 +79,6 @@ func BuildMigrateCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&dst, "dst", "d", "", "Destination Grafana Workspace endpoint")
 	cmd.MarkFlagRequired("dst")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose mode")
 	return cmd
 }

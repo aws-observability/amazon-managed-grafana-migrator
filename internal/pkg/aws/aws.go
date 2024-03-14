@@ -28,7 +28,7 @@ type AMG struct {
 	Client api
 }
 
-// Workspace contains informations about a Grafana workspace
+// Workspace contains information about a Grafana workspace
 type Workspace struct {
 	ID       string
 	Name     string
@@ -79,7 +79,7 @@ func (a *AMG) CreateWorkspaceApiKey(workspaceID string) (AMGApiKey, error) {
 	currentTime := time.Now().UTC()
 	keyName := fmt.Sprintf("%s-%d", "amg-migrator", currentTime.UnixMilli())
 
-	log.Debug("Creating temporary API key for ", workspaceID)
+	log.InfoLight("Creating temporary API key for ", workspaceID)
 
 	duration := time.Duration(30 * 60 * time.Second)
 	resp, err := a.Client.CreateWorkspaceApiKey(&managedgrafana.CreateWorkspaceApiKeyInput{
@@ -99,7 +99,7 @@ func (a *AMG) CreateWorkspaceApiKey(workspaceID string) (AMGApiKey, error) {
 // DeleteWorkspaceApiKey deletes an API key for a workspace
 func (a *AMG) DeleteWorkspaceApiKey(apiKey AMGApiKey) error {
 	log.Info()
-	log.Debug("Removing temporary API key for ", apiKey.WorkspaceID)
+	log.InfoLight("Removing temporary API key for ", apiKey.WorkspaceID)
 
 	_, err := a.Client.DeleteWorkspaceApiKey(&managedgrafana.DeleteWorkspaceApiKeyInput{
 		KeyName:     aws.String(apiKey.KeyName),

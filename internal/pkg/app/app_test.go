@@ -124,6 +124,7 @@ func TestApp_Run(t *testing.T) {
 			},
 			callMockDst: func(m *mocks.Mockapi) {
 				mockNewDatasource(t, m)
+				mockFolder(t, m)
 				mockNewFolder(t, m)
 			},
 			callMockCustomClient: func(m *mocks.MockcustomAPI) {},
@@ -138,6 +139,7 @@ func TestApp_Run(t *testing.T) {
 			callMockDst: func(m *mocks.Mockapi) {
 				mockNewDatasource(t, m)
 				mockNewFolder(t, m)
+				mockFolder(t, m)
 			},
 			callMockCustomClient: func(m *mocks.MockcustomAPI) {
 				m.EXPECT().AllRuleGroups().Return(

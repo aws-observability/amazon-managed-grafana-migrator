@@ -52,6 +52,7 @@ func TestApp_migrateFolders(t *testing.T) {
 			},
 			callMockDst: func(m *mocks.Mockapi) {
 				mockNewFolderWithError(t, m)
+				mockFolder(t, m)
 			},
 			migratedFolders: 0,
 			sourceFolders:   1,
@@ -63,6 +64,7 @@ func TestApp_migrateFolders(t *testing.T) {
 			},
 			callMockDst: func(m *mocks.Mockapi) {
 				mockNewFolder(t, m)
+				mockFolder(t, m)
 			},
 			migratedFolders: 1,
 			sourceFolders:   1,
