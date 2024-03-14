@@ -67,6 +67,12 @@ func TestDebug(t *testing.T) {
 	Debug(verbose, "hello", " world")
 
 	// THEN
+	require.Contains(t, b.String(), "")
+
+	// WHEN
+	Debug(true, "hello", " world")
+
+	// THEN
 	require.Contains(t, b.String(), "hello world\n")
 }
 
@@ -90,6 +96,12 @@ func TestDebugf(t *testing.T) {
 
 	// WHEN
 	Debugf(verbose, "%s %s\n", "hello", "world")
+
+	// THEN
+	require.Contains(t, b.String(), "")
+
+	// WHEN
+	Debugf(true, "%s %s\n", "hello", "world")
 
 	// THEN
 	require.Contains(t, b.String(), "hello world\n")
