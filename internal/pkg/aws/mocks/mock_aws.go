@@ -49,6 +49,21 @@ func (mr *MockapiMockRecorder) CreateWorkspaceApiKey(input interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkspaceApiKey", reflect.TypeOf((*Mockapi)(nil).CreateWorkspaceApiKey), input)
 }
 
+// CreateWorkspaceServiceAccountToken mocks base method.
+func (m *Mockapi) CreateWorkspaceServiceAccountToken(input *managedgrafana.CreateWorkspaceServiceAccountTokenInput) (*managedgrafana.CreateWorkspaceServiceAccountTokenOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateWorkspaceServiceAccountToken", input)
+	ret0, _ := ret[0].(*managedgrafana.CreateWorkspaceServiceAccountTokenOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateWorkspaceServiceAccountToken indicates an expected call of CreateWorkspaceServiceAccountToken.
+func (mr *MockapiMockRecorder) CreateWorkspaceServiceAccountToken(input interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWorkspaceServiceAccountToken", reflect.TypeOf((*Mockapi)(nil).CreateWorkspaceServiceAccountToken), input)
+}
+
 // DeleteWorkspaceApiKey mocks base method.
 func (m *Mockapi) DeleteWorkspaceApiKey(input *managedgrafana.DeleteWorkspaceApiKeyInput) (*managedgrafana.DeleteWorkspaceApiKeyOutput, error) {
 	m.ctrl.T.Helper()
@@ -64,6 +79,36 @@ func (mr *MockapiMockRecorder) DeleteWorkspaceApiKey(input interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWorkspaceApiKey", reflect.TypeOf((*Mockapi)(nil).DeleteWorkspaceApiKey), input)
 }
 
+// DeleteWorkspaceServiceAccountToken mocks base method.
+func (m *Mockapi) DeleteWorkspaceServiceAccountToken(input *managedgrafana.DeleteWorkspaceServiceAccountTokenInput) (*managedgrafana.DeleteWorkspaceServiceAccountTokenOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWorkspaceServiceAccountToken", input)
+	ret0, _ := ret[0].(*managedgrafana.DeleteWorkspaceServiceAccountTokenOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteWorkspaceServiceAccountToken indicates an expected call of DeleteWorkspaceServiceAccountToken.
+func (mr *MockapiMockRecorder) DeleteWorkspaceServiceAccountToken(input interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWorkspaceServiceAccountToken", reflect.TypeOf((*Mockapi)(nil).DeleteWorkspaceServiceAccountToken), input)
+}
+
+// DescribeWorkspace mocks base method.
+func (m *Mockapi) DescribeWorkspace(input *managedgrafana.DescribeWorkspaceInput) (*managedgrafana.DescribeWorkspaceOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DescribeWorkspace", input)
+	ret0, _ := ret[0].(*managedgrafana.DescribeWorkspaceOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DescribeWorkspace indicates an expected call of DescribeWorkspace.
+func (mr *MockapiMockRecorder) DescribeWorkspace(input interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeWorkspace", reflect.TypeOf((*Mockapi)(nil).DescribeWorkspace), input)
+}
+
 // ListWorkspaces mocks base method.
 func (m *Mockapi) ListWorkspaces(input *managedgrafana.ListWorkspacesInput) (*managedgrafana.ListWorkspacesOutput, error) {
 	m.ctrl.T.Helper()
@@ -77,4 +122,41 @@ func (m *Mockapi) ListWorkspaces(input *managedgrafana.ListWorkspacesInput) (*ma
 func (mr *MockapiMockRecorder) ListWorkspaces(input interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkspaces", reflect.TypeOf((*Mockapi)(nil).ListWorkspaces), input)
+}
+
+// MockGrafanaAuth is a mock of GrafanaAuth interface.
+type MockGrafanaAuth struct {
+	ctrl     *gomock.Controller
+	recorder *MockGrafanaAuthMockRecorder
+}
+
+// MockGrafanaAuthMockRecorder is the mock recorder for MockGrafanaAuth.
+type MockGrafanaAuthMockRecorder struct {
+	mock *MockGrafanaAuth
+}
+
+// NewMockGrafanaAuth creates a new mock instance.
+func NewMockGrafanaAuth(ctrl *gomock.Controller) *MockGrafanaAuth {
+	mock := &MockGrafanaAuth{ctrl: ctrl}
+	mock.recorder = &MockGrafanaAuthMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGrafanaAuth) EXPECT() *MockGrafanaAuthMockRecorder {
+	return m.recorder
+}
+
+// GetAuth mocks base method.
+func (m *MockGrafanaAuth) GetAuth() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAuth")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetAuth indicates an expected call of GetAuth.
+func (mr *MockGrafanaAuthMockRecorder) GetAuth() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuth", reflect.TypeOf((*MockGrafanaAuth)(nil).GetAuth))
 }

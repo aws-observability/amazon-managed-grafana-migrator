@@ -120,7 +120,6 @@ func (input *GrafanaInput) CreateGrafanaAPIClient(awsgrafanacli *aws.AMG) (*Graf
 }
 
 // DeleteGrafanaAuth delete the temporary API key from the AWS grafana workspace
-// func (input *GrafanaInput) DeleteAPIKeys(awsgrafanacli *aws.AMG, apiKey aws.AMGApiKey) error {
 func (input *GrafanaInput) DeleteGrafanaAuth(awsgrafanacli *aws.AMG, auth aws.GrafanaAuth) error {
 	if !input.IsAMG {
 		return nil
