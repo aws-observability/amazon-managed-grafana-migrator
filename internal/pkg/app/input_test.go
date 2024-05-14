@@ -20,9 +20,10 @@ import (
 func TestInput_NewGrafanaInput(t *testing.T) {
 	//test cases
 	tests := map[string]struct {
-		wkspEndpoint string
-		url          string
-		apiKey       string
+		wkspEndpoint     string
+		url              string
+		serviceAccountID string
+		apiKey           string
 
 		expectedResult GrafanaInput
 		expectedError  error
@@ -31,8 +32,9 @@ func TestInput_NewGrafanaInput(t *testing.T) {
 			// this should be an endpoint instead
 			wkspEndpoint: "g-abcdefg234",
 			// workspace ID is mutually exclusive with URL/API key
-			url:    "",
-			apiKey: "",
+			url:              "",
+			apiKey:           "",
+			serviceAccountID: "",
 
 			//expected input should be
 			expectedResult: GrafanaInput{},
@@ -42,8 +44,9 @@ func TestInput_NewGrafanaInput(t *testing.T) {
 		"grafana workspace": {
 			wkspEndpoint: "g-abcdefg234.grafana-workspace.eu-central-1.amazonaws.com",
 			// workspace ID is mutually exclusive with URL/API key
-			url:    "",
-			apiKey: "",
+			url:              "",
+			apiKey:           "",
+			serviceAccountID: "",
 
 			//expected input should be
 			expectedResult: GrafanaInput{
@@ -58,8 +61,9 @@ func TestInput_NewGrafanaInput(t *testing.T) {
 		"grafana oss": {
 			wkspEndpoint: "",
 			// workspace ID is mutually exclusive with URL/API key
-			url:    "https://grafana.example.com",
-			apiKey: "fakeAPIKey",
+			url:              "https://grafana.example.com",
+			apiKey:           "fakeAPIKey",
+			serviceAccountID: "",
 
 			//expected input should be
 			expectedResult: GrafanaInput{
@@ -71,9 +75,10 @@ func TestInput_NewGrafanaInput(t *testing.T) {
 			expectedError: nil,
 		},
 		"no input": {
-			wkspEndpoint: "",
-			url:          "",
-			apiKey:       "",
+			wkspEndpoint:     "",
+			url:              "",
+			apiKey:           "",
+			serviceAccountID: "",
 
 			//expected input should be
 			expectedResult: GrafanaInput{},
@@ -84,7 +89,7 @@ func TestInput_NewGrafanaInput(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			input, err := NewGrafanaInput(tc.wkspEndpoint, tc.url, tc.apiKey)
+			input, err := NewGrafanaInput(tc.wkspEndpoint, tc.url, tc.serviceAccountID, tc.apiKey)
 
 			if tc.expectedError != nil {
 				require.EqualError(t, err, tc.expectedError.Error())
@@ -149,7 +154,7 @@ func TestInput_GetApiKey(t *testing.T) {
 				Client: mock,
 			}
 
-			apiKey, err := tc.input.getAPIKey(&awsgrafanacli)
+			apiKey, err := tc.input.getGrafanaAuthToken(&awsgrafanacli)
 			require.Equal(t, tc.expectedResult, apiKey)
 			if tc.expectedError != nil {
 				require.EqualError(t, err, tc.expectedError.Error())
@@ -178,6 +183,14 @@ func TestInput_CreateGrafanaAPIClient(t *testing.T) {
 		"amg client": {
 			input: generateGrafanaInput(t, true),
 			callMock: func(m *mocks.Mockapi) {
+				m.EXPECT().DescribeWorkspace(gomock.Any()).Return(&managedgrafana.DescribeWorkspaceOutput{
+					Workspace: &managedgrafana.WorkspaceDescription{
+						GrafanaVersion: awssdk.String("9.4"),
+						Id:             awssdk.String("g-abcdef1234"),
+						Name:           awssdk.String("unittest"),
+						Endpoint:       awssdk.String("g-abcdef1234.grafana-workspace.eu-central-1.amazonaws.com"),
+					},
+				}, nil).AnyTimes()
 				m.EXPECT().CreateWorkspaceApiKey(gomock.Any()).Return(&managedgrafana.CreateWorkspaceApiKeyOutput{
 					Key:         awssdk.String("fakekey"),
 					WorkspaceId: awssdk.String("g-abcdef1234"),
@@ -255,7 +268,7 @@ func TestInput_DeleteAPIKeys(t *testing.T) {
 				Client: mock,
 			}
 
-			err := tc.input.DeleteAPIKeys(&awsgrafanacli, tc.amgAPIKey)
+			err := tc.input.DeleteGrafanaAuth(&awsgrafanacli, tc.amgAPIKey)
 
 			if tc.expectedError != nil {
 				require.EqualError(t, err, tc.expectedError.Error())

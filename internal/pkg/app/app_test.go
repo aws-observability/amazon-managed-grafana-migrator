@@ -176,7 +176,7 @@ func TestApp_Run(t *testing.T) {
 				Dst: mockDst,
 			}
 
-			err := app.Run(CustomGrafanaClient{Client: mockcustomAPI})
+			err := app.Run()
 			if tc.expectedError != nil {
 				require.EqualError(t, err, tc.expectedError.Error())
 			} else {
