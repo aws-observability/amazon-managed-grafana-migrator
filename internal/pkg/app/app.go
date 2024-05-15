@@ -31,7 +31,7 @@ type App struct {
 // const minAlertingMigrationVersion = 9.4
 
 // Run orchestrates the migration of grafana contents
-func (a *App) Run(srcCustomGrafanaClient CustomGrafanaClient) error {
+func (a *App) Run() error {
 	log.Info()
 	migratedDs, err := a.migrateDataSources()
 	if err != nil {
@@ -54,12 +54,5 @@ func (a *App) Run(srcCustomGrafanaClient CustomGrafanaClient) error {
 	log.Info()
 
 	log.Info("Skipping alert rules migration")
-	/*
-		alertsMigrated, err := a.migrateAlertRules(fx, srcCustomGrafanaClient)
-		if err != nil {
-			return err
-		}
-		log.Success("Migrated ", alertsMigrated, " alerts")
-	*/
 	return nil
 }

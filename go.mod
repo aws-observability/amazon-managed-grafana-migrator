@@ -15,13 +15,13 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.20.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
-	github.com/aws/aws-sdk-go v1.51.30
-	github.com/fatih/color v1.16.0
+	github.com/aws/aws-sdk-go v1.53.3
+	github.com/fatih/color v1.17.0
 	github.com/golang/mock v1.6.0
 	github.com/grafana/grafana-api-golang-client v0.27.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

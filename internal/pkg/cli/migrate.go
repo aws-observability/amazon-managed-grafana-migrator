@@ -3,7 +3,6 @@ package cli
 import (
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/app"
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws"
-	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/grafana"
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -11,8 +10,8 @@ import (
 )
 
 var (
-	src, srcURL, srcAPIKey, dst string
-	verbose                     bool
+	src, srcURL, srcServiceAccountID, srcAPIKey, dst, dstServiceAccountID string
+	verbose                                                               bool
 )
 
 func migrate(src, dst app.GrafanaInput, verbose bool) error {
@@ -26,29 +25,17 @@ func migrate(src, dst app.GrafanaInput, verbose bool) error {
 	if err != nil {
 		return err
 	}
-	defer src.DeleteAPIKeys(srcAWSClient, srcGrafanaClient.Key)
+	defer src.DeleteGrafanaAuth(srcAWSClient, srcGrafanaClient.Auth)
 
 	dstAWSClient := aws.New(sess, dst.Region, dst.IsGamma)
 	dstGrafanaClient, err := dst.CreateGrafanaAPIClient(dstAWSClient)
 	if err != nil {
 		return err
 	}
-	defer dst.DeleteAPIKeys(dstAWSClient, dstGrafanaClient.Key)
-
-	//looking for API key for CLI provided or AWS CLI SDK
-	apikey := srcGrafanaClient.Key.APIKey
-	if apikey == "" {
-		apikey = srcGrafanaClient.Input.APIKey
-	}
-
-	// new custom client
-	customClient, err := grafana.New(srcGrafanaClient.Input.URL, apikey)
-	if err != nil {
-		return err
-	}
+	defer dst.DeleteGrafanaAuth(dstAWSClient, dstGrafanaClient.Auth)
 
 	migrate := app.App{Src: srcGrafanaClient.Client, Dst: dstGrafanaClient.Client, Verbose: verbose}
-	return migrate.Run(app.CustomGrafanaClient{Client: customClient})
+	return migrate.Run()
 }
 
 // BuildMigrateCmd builds the migrate CLI command
@@ -59,11 +46,11 @@ func BuildMigrateCmd() *cobra.Command {
 		Long:  "Discover Managed Grafana workspaces",
 		RunE: runCmdE(func(cmd *cobra.Command, args []string) error {
 			log.Info()
-			src, err := app.NewGrafanaInput(src, srcURL, srcAPIKey)
+			src, err := app.NewGrafanaInput(src, srcURL, srcServiceAccountID, srcAPIKey)
 			if err != nil {
 				return err
 			}
-			dst, err := app.NewGrafanaInput(dst, "", "")
+			dst, err := app.NewGrafanaInput(dst, "", dstServiceAccountID, "")
 			if err != nil {
 				return err
 			}
@@ -72,12 +59,14 @@ func BuildMigrateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&src, "src", "s", "", "Source Grafana workspace")
+	cmd.Flags().StringVarP(&srcServiceAccountID, "src-service-account-id", "", "", "Grafana Service Account ID for source workspace (exclusive with src)")
 	cmd.Flags().StringVarP(&srcURL, "src-url", "", "", "Source Grafana URL (exclusive with src)")
-	cmd.Flags().StringVarP(&srcAPIKey, "src-api-key", "", "", "Source Grafana API Key (mandatory when using src-url)")
+	cmd.Flags().StringVarP(&srcAPIKey, "src-api-key", "", "", "Source Grafana API Key or Service Account Token (mandatory when using src-url)")
 	cmd.MarkFlagsRequiredTogether("src-url", "src-api-key")
 	cmd.MarkFlagsMutuallyExclusive("src-url", "src")
 
 	cmd.Flags().StringVarP(&dst, "dst", "d", "", "Destination Grafana Workspace endpoint")
+	cmd.Flags().StringVarP(&dstServiceAccountID, "dst-service-account-id", "", "", "Grafana Service Account ID for destination workspace (required for v10+ workspaces)")
 	cmd.MarkFlagRequired("dst")
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose mode")
 	return cmd
