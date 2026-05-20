@@ -1,0 +1,42 @@
+{
+  "uid": "integ-test-dash-1",
+  "title": "Integration Test Dashboard",
+  "tags": ["integration-test"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Sample Panel",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "TestPrometheus"
+      },
+      "targets": [
+        {
+          "expr": "up",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "title": "Another Panel",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "TestPrometheus"
+      },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 }
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

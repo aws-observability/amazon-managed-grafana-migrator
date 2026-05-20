@@ -1,0 +1,48 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: integration-test-alerts
+    folder: Integration Test Folder
+    interval: 1m
+    rules:
+      - uid: integ-alert-1
+        title: "Test Alert - High CPU"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: TestPrometheus
+            model:
+              expr: "up == 0"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+              refId: C
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "Test alert for integration testing"
+        labels:
+          severity: warning
+          team: integration-test
