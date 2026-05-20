@@ -2,31 +2,32 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"os"
 
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws"
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/spf13/cobra"
 )
 
 var errMissingRegion = errors.New("missing AWS region")
 
-// discover discovers workspaces in a region
 func discover(region string) error {
 	if region == "" {
 		return errMissingRegion
 	}
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
 
-	awsGrafana := aws.New(sess, region, false)
+	ctx := context.Background()
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return err
+	}
 
-	wx, err := awsGrafana.ListWorkspaces()
-
+	awsGrafana := aws.New(cfg, region)
+	wx, err := awsGrafana.ListWorkspaces(ctx)
 	if err != nil {
 		return err
 	}
@@ -58,16 +59,14 @@ func BuildDiscoverCmd() *cobra.Command {
 			return discover(region)
 		}),
 	}
-
 	return cmd
 }
 
-// runCmdE wraps one of the run error methods, PreRunE, RunE, of a cobra command so that if a user
-// types "help" in the arguments the usage string is printed instead of running the command.
+// runCmdE wraps a cobra RunE so that "help" as an argument prints usage
 func runCmdE(f func(cmd *cobra.Command, args []string) error) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) == 1 && args[0] == "help" {
-			_ = cmd.Help() // Help always returns nil.
+			_ = cmd.Help()
 			os.Exit(0)
 		}
 		return f(cmd, args)
