@@ -4,84 +4,63 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/app/mocks"
-
-	"github.com/golang/mock/gomock"
-	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
-func TestApp_migrateDataSources(t *testing.T) {
-	//test cases
+func TestMigrateDataSources(t *testing.T) {
 	tests := map[string]struct {
-		callMockSrc        func(m *mocks.Mockapi)
-		callMockDst        func(m *mocks.Mockapi)
-		expectedMigratedDs int
-		expectedError      error
+		setupMocks func(src, dst *mockAPI)
+		expected   int
+		expectErr  bool
 	}{
-		"error getting ds from src": {
-			callMockSrc: func(m *mocks.Mockapi) {
-				m.EXPECT().DataSources().Return(nil, errors.New("some error")).AnyTimes()
+		"migrates successfully": {
+			setupMocks: func(src, dst *mockAPI) {
+				src.EXPECT().DataSources().Return([]DataSource{
+					{Name: "Prometheus", Type: "prometheus"},
+					{Name: "CloudWatch", Type: "cloudwatch"},
+				}, nil)
+				dst.EXPECT().CreateDataSource(gomock.Any()).Return(nil).Times(2)
 			},
-			callMockDst:        func(m *mocks.Mockapi) {},
-			expectedMigratedDs: 0,
-			expectedError:      errors.New("some error"),
+			expected: 2,
 		},
-		"syncing ds should continue on error": {
-			callMockSrc: func(m *mocks.Mockapi) {
-				mockDataSource(t, m)
+		"skips failed datasources": {
+			setupMocks: func(src, dst *mockAPI) {
+				src.EXPECT().DataSources().Return([]DataSource{
+					{Name: "Prometheus", Type: "prometheus"},
+					{Name: "CloudWatch", Type: "cloudwatch"},
+				}, nil)
+				dst.EXPECT().CreateDataSource(gomock.Any()).Return(errors.New("conflict"))
+				dst.EXPECT().CreateDataSource(gomock.Any()).Return(nil)
 			},
-			callMockDst: func(m *mocks.Mockapi) {
-				ds := gapi.DataSource{
-					ID:   1,
-					UID:  "uid",
-					Name: "test-ds",
-					URL:  "http://test.com/ds",
-				}
-				m.EXPECT().NewDataSource(&ds).Return(
-					int64(1), errors.New("error while creating ds in dest"),
-				).AnyTimes()
-			},
-			expectedMigratedDs: 0,
-			expectedError:      nil,
+			expected: 1,
 		},
-		"syncing ds": {
-			callMockSrc: func(m *mocks.Mockapi) {
-				mockDataSource(t, m)
+		"error listing datasources": {
+			setupMocks: func(src, dst *mockAPI) {
+				src.EXPECT().DataSources().Return(nil, errors.New("connection error"))
 			},
-			callMockDst: func(m *mocks.Mockapi) {
-				mockNewDatasource(t, m)
-			},
-			expectedMigratedDs: 1,
-			expectedError:      nil,
+			expected:  0,
+			expectErr: true,
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			// mocks gapi.Client for src and dst grafana endpoints
-			mockSrc := mocks.NewMockapi(ctrl)
-			mockDst := mocks.NewMockapi(ctrl)
+			srcMock := newMockAPI(ctrl)
+			dstMock := newMockAPI(ctrl)
+			tc.setupMocks(srcMock, dstMock)
 
-			tc.callMockSrc(mockSrc)
-			tc.callMockDst(mockDst)
+			a := App{Src: srcMock, Dst: dstMock}
+			count, err := a.migrateDataSources()
 
-			app := App{
-				Src: mockSrc,
-				Dst: mockDst,
-			}
-
-			migratedDs, err := app.migrateDataSources()
-
-			require.Equal(t, migratedDs, tc.expectedMigratedDs)
-			if tc.expectedError != nil {
-				require.EqualError(t, err, tc.expectedError.Error())
+			if tc.expectErr {
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+				require.Equal(t, tc.expected, count)
 			}
 		})
 	}

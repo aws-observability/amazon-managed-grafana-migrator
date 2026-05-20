@@ -1,20 +1,21 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws"
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
-
-	gapi "github.com/grafana/grafana-api-golang-client"
+	"github.com/hashicorp/go-cleanhttp"
 )
 
 const (
+	AMG_V12 = "12.4"
 	AMG_V10 = "10.4"
 	AMG_V9  = "9.4"
-	AMG_V8  = "8.4"
 )
 
 // GrafanaInput holds the infos about the grafana server from the CLI
@@ -26,17 +27,17 @@ type GrafanaInput struct {
 	ServiceAccountID string
 	WorkspaceVersion string
 	IsAMG            bool
-	IsGamma          bool
 }
 
-// GrafanaHTTPClient contains the grafana client and AWS API key
+// GrafanaHTTPClient contains the grafana HTTP client and AWS auth token
 type GrafanaHTTPClient struct {
-	Client *gapi.Client
-	Auth   aws.GrafanaAuth
-	Input  *GrafanaInput
+	BaseURL    string
+	HTTPClient *http.Client
+	Auth       aws.GrafanaAuth
+	Input      *GrafanaInput
 }
 
-// NewGrafanaInput validate input from command line to return a GrafanaInput object
+// NewGrafanaInput validates input from command line to return a GrafanaInput object
 func NewGrafanaInput(wkspEndpoint, url, serviceAccountID, apiKey string) (GrafanaInput, error) {
 	if wkspEndpoint != "" {
 		sx := strings.Split(wkspEndpoint, ".")
@@ -49,7 +50,6 @@ func NewGrafanaInput(wkspEndpoint, url, serviceAccountID, apiKey string) (Grafan
 			URL:              wkspEndpoint,
 			ServiceAccountID: serviceAccountID,
 			IsAMG:            true,
-			IsGamma:          strings.Contains(sx[1], "gamma"),
 		}, nil
 	} else if url != "" && apiKey != "" {
 		return GrafanaInput{
@@ -62,72 +62,51 @@ func NewGrafanaInput(wkspEndpoint, url, serviceAccountID, apiKey string) (Grafan
 	return GrafanaInput{}, errors.New("invalid input")
 }
 
-// getGrafanaAuthToken create Grafana api keys only when provided with a managed grafana ID
-// if service account is provided, it will create a service account token
-func (input *GrafanaInput) getGrafanaAuthToken(awsgrafanacli *aws.AMG) (aws.GrafanaAuth, error) {
-
+// getGrafanaAuthToken creates a service account token for AMG workspaces
+func (input *GrafanaInput) getGrafanaAuthToken(ctx context.Context, awsgrafanacli *aws.AMG) (aws.GrafanaAuth, error) {
 	if !input.IsAMG {
-		log.InfoLight("Skipping API key creation for ", input.URL)
-		return aws.AMGApiKey{
-			APIKey: input.APIKey,
-		}, nil
+		log.InfoLight("Using provided API key for ", input.URL)
+		return aws.ExternalAPIKey{APIKey: input.APIKey}, nil
 	}
 
-	wksp, err := awsgrafanacli.DescribeWorkspace(input.WorkspaceID)
+	wksp, err := awsgrafanacli.DescribeWorkspace(ctx, input.WorkspaceID)
 	if err == nil {
 		input.WorkspaceVersion = wksp.Version
 	}
 
-	// forcing V10 to use service account token
-	if input.WorkspaceVersion == AMG_V10 && input.ServiceAccountID == "" {
-		return nil, errors.New("input error: service account ID is required for AMG v10, run migrate -h for help")
+	if input.ServiceAccountID == "" {
+		return nil, errors.New("input error: service account ID is required for AMG workspaces (v9+), run migrate -h for help")
 	}
 
-	// creating service account token if service account is provided
-	if input.ServiceAccountID != "" {
-		return awsgrafanacli.CreateServiceAccountToken(input.WorkspaceID, input.ServiceAccountID)
-	}
-
-	// creating temporary API key if no service account is provided
-	return awsgrafanacli.CreateWorkspaceApiKey(input.WorkspaceID)
+	return awsgrafanacli.CreateServiceAccountToken(ctx, input.WorkspaceID, input.ServiceAccountID)
 }
 
-// CreateGrafanaAPIClient create a grafana HTTP API client from the input
-func (input *GrafanaInput) CreateGrafanaAPIClient(awsgrafanacli *aws.AMG) (*GrafanaHTTPClient, error) {
-	var url string
-
+// CreateGrafanaHTTPClient creates a Grafana HTTP client from the input
+func (input *GrafanaInput) CreateGrafanaHTTPClient(ctx context.Context, awsgrafanacli *aws.AMG) (*GrafanaHTTPClient, error) {
+	var baseURL string
 	if input.IsAMG {
-		url = fmt.Sprintf("https://%s", input.URL)
+		baseURL = fmt.Sprintf("https://%s", input.URL)
 	} else {
-		url = input.URL
+		baseURL = input.URL
 	}
 
-	// get final auth key or token
-	apiKey, err := input.getGrafanaAuthToken(awsgrafanacli)
+	auth, err := input.getGrafanaAuthToken(ctx, awsgrafanacli)
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := gapi.New(url, gapi.Config{APIKey: apiKey.GetAuth()})
-	if err != nil {
-		return nil, err
-	}
 	return &GrafanaHTTPClient{
-		Client: client,
-		Auth:   apiKey,
-		Input:  input,
+		BaseURL:    baseURL,
+		HTTPClient: cleanhttp.DefaultClient(),
+		Auth:       auth,
+		Input:      input,
 	}, nil
 }
 
-// DeleteGrafanaAuth delete the temporary API key from the AWS grafana workspace
-func (input *GrafanaInput) DeleteGrafanaAuth(awsgrafanacli *aws.AMG, auth aws.GrafanaAuth) error {
+// DeleteGrafanaAuth deletes the temporary service account token
+func (input *GrafanaInput) DeleteGrafanaAuth(ctx context.Context, awsgrafanacli *aws.AMG, auth aws.GrafanaAuth) error {
 	if !input.IsAMG {
 		return nil
 	}
-
-	if input.ServiceAccountID != "" {
-		return awsgrafanacli.DeleteServiceAccountToken(auth.(aws.AMGServiceAccountToken))
-	}
-
-	return awsgrafanacli.DeleteWorkspaceApiKey(auth.(aws.AMGApiKey))
+	return awsgrafanacli.DeleteServiceAccountToken(ctx, auth.(aws.AMGServiceAccountToken))
 }
