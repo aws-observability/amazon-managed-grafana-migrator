@@ -1,52 +1,45 @@
 package aws
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws/mocks"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/managedgrafana"
-	"github.com/golang/mock/gomock"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/grafana"
+	"github.com/aws/aws-sdk-go-v2/service/grafana/types"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
-func getFakeAPIKey(_ *testing.T) AMGApiKey {
-	return AMGApiKey{
-		KeyName:     "amg-migrator-", //keyname has a currentime millisecond suffix
-		APIKey:      "fakekey",
-		WorkspaceID: "g-abcdef1234",
-	}
-}
-
 func TestAMG_ListWorkspaces(t *testing.T) {
-
 	tests := map[string]struct {
-		callMock func(m *mocks.Mockapi)
-
+		callMock           func(m *mocks.Mockapi)
 		expectedWorkspaces int
 		expectedError      error
 	}{
-		"error listing wx": {
+		"error listing workspaces": {
 			callMock: func(m *mocks.Mockapi) {
-				m.EXPECT().ListWorkspaces(&managedgrafana.ListWorkspacesInput{}).Return(
+				m.EXPECT().ListWorkspaces(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("error listing workspaces"),
 				)
 			},
 			expectedWorkspaces: 0,
 			expectedError:      errors.New("error listing workspaces"),
 		},
-		"listing wx": {
+		"listing workspaces": {
 			callMock: func(m *mocks.Mockapi) {
-				m.EXPECT().ListWorkspaces(&managedgrafana.ListWorkspacesInput{}).Return(
-					&managedgrafana.ListWorkspacesOutput{
-						Workspaces: []*managedgrafana.WorkspaceSummary{
+				m.EXPECT().ListWorkspaces(gomock.Any(), gomock.Any()).Return(
+					&grafana.ListWorkspacesOutput{
+						Workspaces: []types.WorkspaceSummary{
 							{
 								Id:             aws.String("g-abcdef1234"),
 								Name:           aws.String("test"),
-								GrafanaVersion: aws.String("8.4"),
-								Endpoint:       aws.String("http://g-abcdef1234.us-east-1.grafana.amazonaws.com"),
+								GrafanaVersion: aws.String("10.4"),
+								Endpoint:       aws.String("g-abcdef1234.grafana-workspace.us-east-1.amazonaws.com"),
+								Status:         types.WorkspaceStatusActive,
 							},
 						},
 					}, nil,
@@ -59,105 +52,48 @@ func TestAMG_ListWorkspaces(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			// GIVEN
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mock := mocks.NewMockapi(ctrl)
 			tc.callMock(mock)
 
-			client := AMG{
-				Client: mock,
-			}
-			wx, err := client.ListWorkspaces()
-
-			require.Equal(t, tc.expectedWorkspaces, len(wx))
-			if tc.expectedError != nil {
-				require.EqualError(t, err, tc.expectedError.Error())
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestAMG_CreateWorkspaceApiKey(t *testing.T) {
-
-	tests := map[string]struct {
-		workspaceID string
-		callMock    func(m *mocks.Mockapi)
-
-		expectedAPIKey AMGApiKey
-		expectedError  error
-	}{
-		"error creating api key": {
-			workspaceID: "g-abcdef1234",
-			callMock: func(m *mocks.Mockapi) {
-				m.EXPECT().CreateWorkspaceApiKey(gomock.Any()).Return(nil, errors.New("error creating api key"))
-			},
-			expectedAPIKey: AMGApiKey{},
-			expectedError:  errors.New("error creating api key"),
-		},
-		"creating api key": {
-			workspaceID: "g-abcdef1234",
-			callMock: func(m *mocks.Mockapi) {
-				m.EXPECT().CreateWorkspaceApiKey(gomock.Any()).Return(&managedgrafana.CreateWorkspaceApiKeyOutput{
-					Key:         aws.String("fakekey"),
-					WorkspaceId: aws.String("g-abcdef1234"),
-				}, nil)
-			},
-			expectedAPIKey: getFakeAPIKey(t),
-			expectedError:  nil,
-		},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mock := mocks.NewMockapi(ctrl)
-			tc.callMock(mock)
-
-			client := AMG{
-				Client: mock,
-			}
-			apiKey, err := client.CreateWorkspaceApiKey(tc.workspaceID)
+			client := AMG{Client: mock}
+			wx, err := client.ListWorkspaces(context.Background())
 
 			if tc.expectedError != nil {
 				require.EqualError(t, err, tc.expectedError.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tc.expectedAPIKey.APIKey, apiKey.APIKey)
-				require.Equal(t, tc.expectedAPIKey.WorkspaceID, apiKey.WorkspaceID)
-				require.Contains(t, apiKey.KeyName, tc.expectedAPIKey.KeyName)
+				require.Len(t, wx, tc.expectedWorkspaces)
 			}
 		})
 	}
 }
 
-func TestAMG_DeleteWorkspaceApiKey(t *testing.T) {
-
+func TestAMG_CreateServiceAccountToken(t *testing.T) {
 	tests := map[string]struct {
-		apiKey   AMGApiKey
-		callMock func(m *mocks.Mockapi)
-
+		callMock      func(m *mocks.Mockapi)
 		expectedError error
 	}{
-		"error deleting api key": {
-			apiKey: getFakeAPIKey(t),
+		"error creating token": {
 			callMock: func(m *mocks.Mockapi) {
-				m.EXPECT().DeleteWorkspaceApiKey(gomock.Any()).Return(nil, errors.New("error deleting api key"))
+				m.EXPECT().CreateWorkspaceServiceAccountToken(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("error creating token"),
+				)
 			},
-			expectedError: errors.New("error deleting api key"),
+			expectedError: errors.New("error creating token"),
 		},
-		"deleting api key": {
-			apiKey: getFakeAPIKey(t),
+		"creating token": {
 			callMock: func(m *mocks.Mockapi) {
-				m.EXPECT().DeleteWorkspaceApiKey(gomock.Any()).Return(&managedgrafana.DeleteWorkspaceApiKeyOutput{
-					KeyName:     aws.String("fakekey"),
-					WorkspaceId: aws.String("g-abcdef1234"),
-				}, nil)
+				m.EXPECT().CreateWorkspaceServiceAccountToken(gomock.Any(), gomock.Any()).Return(
+					&grafana.CreateWorkspaceServiceAccountTokenOutput{
+						ServiceAccountToken: &types.ServiceAccountTokenSummaryWithKey{
+							Id:  aws.String("token-123"),
+							Key: aws.String("fake-token-key"),
+						},
+					}, nil,
+				)
 			},
 			expectedError: nil,
 		},
@@ -171,10 +107,60 @@ func TestAMG_DeleteWorkspaceApiKey(t *testing.T) {
 			mock := mocks.NewMockapi(ctrl)
 			tc.callMock(mock)
 
-			client := AMG{
-				Client: mock,
+			client := AMG{Client: mock}
+			token, err := client.CreateServiceAccountToken(context.Background(), "g-abcdef1234", "sa-1")
+
+			if tc.expectedError != nil {
+				require.EqualError(t, err, tc.expectedError.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, "fake-token-key", token.Token)
+				require.Equal(t, "token-123", token.SATokenID)
+				require.Equal(t, "sa-1", token.ServiceAccountID)
 			}
-			err := client.DeleteWorkspaceApiKey(tc.apiKey)
+		})
+	}
+}
+
+func TestAMG_DeleteServiceAccountToken(t *testing.T) {
+	tests := map[string]struct {
+		callMock      func(m *mocks.Mockapi)
+		expectedError error
+	}{
+		"error deleting token": {
+			callMock: func(m *mocks.Mockapi) {
+				m.EXPECT().DeleteWorkspaceServiceAccountToken(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("error deleting token"),
+				)
+			},
+			expectedError: errors.New("error deleting token"),
+		},
+		"deleting token": {
+			callMock: func(m *mocks.Mockapi) {
+				m.EXPECT().DeleteWorkspaceServiceAccountToken(gomock.Any(), gomock.Any()).Return(
+					&grafana.DeleteWorkspaceServiceAccountTokenOutput{}, nil,
+				)
+			},
+			expectedError: nil,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mock := mocks.NewMockapi(ctrl)
+			tc.callMock(mock)
+
+			client := AMG{Client: mock}
+			saToken := AMGServiceAccountToken{
+				ServiceAccountID: "sa-1",
+				SATokenID:        "token-123",
+				Token:            "fake-token-key",
+				WorkspaceID:      "g-abcdef1234",
+			}
+			err := client.DeleteServiceAccountToken(context.Background(), saToken)
 
 			if tc.expectedError != nil {
 				require.EqualError(t, err, tc.expectedError.Error())
