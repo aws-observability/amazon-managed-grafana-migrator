@@ -1,0 +1,138 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Test scenario to run"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - docker-to-amg
+          - amg-to-amg
+          - v10-to-v12
+          - all
+      action:
+        description: "Action to perform"
+        required: true
+        default: "test"
+        type: choice
+        options:
+          - test
+          - setup
+          - teardown
+          - destroy
+
+env:
+  AWS_REGION: us-east-1
+  TF_DIR: test/integration/terraform
+  DST_ENDPOINT: ${{ secrets.INTEG_DST_ENDPOINT }}
+  DST_SERVICE_ACCOUNT_ID: ${{ secrets.INTEG_DST_SERVICE_ACCOUNT_ID }}
+  SRC_ENDPOINT: ${{ secrets.INTEG_SRC_ENDPOINT }}
+  SRC_SERVICE_ACCOUNT_ID: ${{ secrets.INTEG_SRC_SERVICE_ACCOUNT_ID }}
+  SRC_V10_ENDPOINT: ${{ secrets.INTEG_SRC_V10_ENDPOINT }}
+  SRC_V10_SERVICE_ACCOUNT_ID: ${{ secrets.INTEG_SRC_V10_SERVICE_ACCOUNT_ID }}
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.INTEG_AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      # --- SETUP: Provision infrastructure ---
+      - name: Terraform Init
+        if: inputs.action == 'setup' || inputs.action == 'test'
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform init
+
+      - name: Terraform Apply
+        if: inputs.action == 'setup'
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -auto-approve
+
+      - name: Wait for workspaces
+        if: inputs.action == 'setup'
+        run: |
+          for ws in $(cd $TF_DIR && terraform output -json | python3 -c "
+          import sys,json
+          o=json.load(sys.stdin)
+          for k,v in o.items():
+            if 'endpoint' in k:
+              print(v['value'].split('.')[0])
+          "); do
+            echo "Waiting for $ws..."
+            while [ "$(aws grafana describe-workspace --workspace-id $ws --query 'workspace.status' --output text)" != "ACTIVE" ]; do
+              sleep 10
+            done
+          done
+
+      - name: Seed source workspace
+        if: inputs.action == 'setup'
+        working-directory: test/integration
+        run: |
+          cd terraform
+          export SRC_ENDPOINT=$(terraform output -raw src_v9_endpoint)
+          export SRC_SERVICE_ACCOUNT_ID=$(terraform output -raw src_v9_service_account_id)
+          cd ..
+          ./seed.sh
+
+      # --- TEST: Run migration scenarios ---
+      - name: Export Terraform outputs
+        if: inputs.action == 'test'
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          echo "SRC_ENDPOINT=$(terraform output -raw src_v9_endpoint)" >> $GITHUB_ENV
+          echo "SRC_SERVICE_ACCOUNT_ID=$(terraform output -raw src_v9_service_account_id)" >> $GITHUB_ENV
+          echo "SRC_V10_ENDPOINT=$(terraform output -raw src_v10_endpoint)" >> $GITHUB_ENV
+          echo "SRC_V10_SERVICE_ACCOUNT_ID=$(terraform output -raw src_v10_service_account_id)" >> $GITHUB_ENV
+          echo "DST_ENDPOINT=$(terraform output -raw dst_v12_endpoint)" >> $GITHUB_ENV
+          echo "DST_SERVICE_ACCOUNT_ID=$(terraform output -raw dst_v12_service_account_id)" >> $GITHUB_ENV
+
+      - name: Run integration tests
+        if: inputs.action == 'test'
+        working-directory: test/integration
+        run: ./run_integration.sh ${{ inputs.scenario }}
+
+      # --- TEARDOWN: Clean destination workspace ---
+      - name: Teardown migrated content
+        if: inputs.action == 'teardown' || inputs.action == 'test'
+        working-directory: test/integration
+        run: |
+          if [ "${{ inputs.action }}" == "test" ]; then
+            # Env vars already set from export step
+            true
+          else
+            cd terraform && terraform init
+            export DST_ENDPOINT=$(terraform output -raw dst_v12_endpoint)
+            export DST_SERVICE_ACCOUNT_ID=$(terraform output -raw dst_v12_service_account_id)
+            cd ..
+          fi
+          ./teardown.sh
+
+      # --- DESTROY: Remove all infrastructure ---
+      - name: Terraform Destroy
+        if: inputs.action == 'destroy'
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          terraform init
+          terraform destroy -auto-approve

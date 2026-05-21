@@ -4,174 +4,72 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/app/mocks"
-
-	"github.com/golang/mock/gomock"
-	gapi "github.com/grafana/grafana-api-golang-client"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
-func generateTestFolders(_ *testing.T) []gapi.Folder {
-	return []gapi.Folder{
-		{
-			ID:    1,
-			UID:   "uid",
-			Title: "test",
-			URL:   "http://test.com",
-		},
-		{
-			ID:    2,
-			UID:   "uid2",
-			Title: "test2",
-			URL:   "http://test2.com",
-		},
-	}
-}
-
-func TestApp_migrateFolders(t *testing.T) {
-	//test cases
+func TestMigrateFolders(t *testing.T) {
 	tests := map[string]struct {
-		callMockSrc     func(m *mocks.Mockapi)
-		callMockDst     func(m *mocks.Mockapi)
-		migratedFolders int
-		sourceFolders   int
-		expectedError   error
+		setupMocks func(src, dst *mockAPI)
+		expected   int
+		expectErr  bool
 	}{
-		"error getting folders from src": {
-			callMockSrc: func(m *mocks.Mockapi) {
-				m.EXPECT().Folders().Return(nil, errors.New("some error")).AnyTimes()
+		"migrates folders": {
+			setupMocks: func(src, dst *mockAPI) {
+				src.EXPECT().Folders().Return([]Folder{
+					{ID: 1, UID: "f-1", Title: "Team A"},
+					{ID: 2, UID: "f-2", Title: "Team B"},
+				}, nil)
+				dst.EXPECT().CreateFolder("Team A", "f-1").Return(Folder{ID: 10, UID: "f-1", Title: "Team A"}, nil)
+				dst.EXPECT().CreateFolder("Team B", "f-2").Return(Folder{ID: 11, UID: "f-2", Title: "Team B"}, nil)
+				dst.EXPECT().Folders().Return([]Folder{
+					{ID: 10, UID: "f-1", Title: "Team A"},
+					{ID: 11, UID: "f-2", Title: "Team B"},
+				}, nil)
 			},
-			callMockDst:     func(m *mocks.Mockapi) {},
-			migratedFolders: 0,
-			sourceFolders:   0,
-			expectedError:   errors.New("some error"),
+			expected: 2,
 		},
-		"syncing one folder with error": {
-			callMockSrc: func(m *mocks.Mockapi) {
-				mockFolder(t, m)
+		"error listing source folders": {
+			setupMocks: func(src, dst *mockAPI) {
+				src.EXPECT().Folders().Return(nil, errors.New("error"))
 			},
-			callMockDst: func(m *mocks.Mockapi) {
-				mockNewFolderWithError(t, m)
-				mockFolder(t, m)
-			},
-			migratedFolders: 0,
-			sourceFolders:   1,
-			expectedError:   nil,
+			expected:  0,
+			expectErr: true,
 		},
-		"syncing one folder": {
-			callMockSrc: func(m *mocks.Mockapi) {
-				mockFolder(t, m)
+		"partial failure creating folders": {
+			setupMocks: func(src, dst *mockAPI) {
+				src.EXPECT().Folders().Return([]Folder{
+					{ID: 1, UID: "f-1", Title: "Team A"},
+					{ID: 2, UID: "f-2", Title: "Team B"},
+				}, nil)
+				dst.EXPECT().CreateFolder("Team A", "f-1").Return(Folder{}, errors.New("already exists"))
+				dst.EXPECT().CreateFolder("Team B", "f-2").Return(Folder{ID: 11, UID: "f-2", Title: "Team B"}, nil)
+				dst.EXPECT().Folders().Return([]Folder{
+					{ID: 11, UID: "f-2", Title: "Team B"},
+				}, nil)
 			},
-			callMockDst: func(m *mocks.Mockapi) {
-				mockNewFolder(t, m)
-				mockFolder(t, m)
-			},
-			migratedFolders: 1,
-			sourceFolders:   1,
-			expectedError:   nil,
+			expected: 1,
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			// mocks gapi.Client for src and dst grafana endpoints
-			mockSrc := mocks.NewMockapi(ctrl)
-			mockDst := mocks.NewMockapi(ctrl)
+			srcMock := newMockAPI(ctrl)
+			dstMock := newMockAPI(ctrl)
+			tc.setupMocks(srcMock, dstMock)
 
-			tc.callMockSrc(mockSrc)
-			tc.callMockDst(mockDst)
+			a := App{Src: srcMock, Dst: dstMock}
+			resp, err := a.migrateFolders()
 
-			app := App{
-				Src: mockSrc,
-				Dst: mockDst,
-			}
-
-			fx, err := app.migrateFolders()
-
-			if tc.expectedError != nil {
-				require.EqualError(t, err, tc.expectedError.Error())
+			if tc.expectErr {
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Len(t, fx.SrcFolders, tc.sourceFolders)
-				require.Len(t, fx.MigratedFolders, tc.migratedFolders)
+				require.Equal(t, tc.expected, len(resp.MigratedFolders))
 			}
-		})
-	}
-}
-
-func TestApp_getFolderID(t *testing.T) {
-
-	//test cases
-	tests := map[string]struct {
-		folders     []gapi.Folder
-		folderTitle string
-		expectedID  int64
-	}{
-		"empty list": {
-			folders:     []gapi.Folder{},
-			folderTitle: "test",
-			expectedID:  0,
-		},
-		"included folder": {
-			folders:     generateTestFolders(t),
-			folderTitle: "test2",
-			expectedID:  2,
-		},
-		"non included folder": {
-			folders:     generateTestFolders(t),
-			folderTitle: "test3",
-			expectedID:  0,
-		},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			id := searchFolderID(&tc.folders, tc.folderTitle)
-			require.Equal(t, id, tc.expectedID)
-		})
-	}
-}
-
-func TestApp_getFolderUID(t *testing.T) {
-
-	//test cases
-	tests := map[string]struct {
-		folders     []gapi.Folder
-		folderTitle string
-		expectedUID string
-	}{
-		"empty list": {
-			folders:     []gapi.Folder{},
-			folderTitle: "test",
-			expectedUID: "",
-		},
-		"included folder": {
-			folders:     generateTestFolders(t),
-			folderTitle: "test2",
-			expectedUID: "uid2",
-		},
-		"non included folder": {
-			folders: []gapi.Folder{
-				{
-					ID:    1,
-					UID:   "uid",
-					Title: "test",
-					URL:   "http://test.com",
-				},
-			},
-			folderTitle: "test2",
-			expectedUID: "",
-		},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			id := searchFolderUID(&tc.folders, tc.folderTitle)
-			require.Equal(t, id, tc.expectedUID)
 		})
 	}
 }

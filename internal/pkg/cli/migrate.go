@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/app"
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/aws"
 	"github.com/aws-observability/amazon-managed-grafana-migrator/internal/pkg/log"
 
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/spf13/cobra"
 )
 
@@ -14,60 +16,70 @@ var (
 	verbose                                                               bool
 )
 
-func migrate(src, dst app.GrafanaInput, verbose bool) error {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
+func migrate(srcInput, dstInput app.GrafanaInput, verbose bool) error {
+	ctx := context.Background()
 
-	// create clients
-	srcAWSClient := aws.New(sess, src.Region, src.IsGamma)
-	srcGrafanaClient, err := src.CreateGrafanaAPIClient(srcAWSClient)
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return err
 	}
-	defer src.DeleteGrafanaAuth(srcAWSClient, srcGrafanaClient.Auth)
 
-	dstAWSClient := aws.New(sess, dst.Region, dst.IsGamma)
-	dstGrafanaClient, err := dst.CreateGrafanaAPIClient(dstAWSClient)
+	// create source client
+	srcAWSClient := aws.New(cfg, srcInput.Region)
+	srcGrafana, err := srcInput.CreateGrafanaHTTPClient(ctx, srcAWSClient)
 	if err != nil {
 		return err
 	}
-	defer dst.DeleteGrafanaAuth(dstAWSClient, dstGrafanaClient.Auth)
+	defer srcInput.DeleteGrafanaAuth(ctx, srcAWSClient, srcGrafana.Auth)
 
-	migrate := app.App{Src: srcGrafanaClient.Client, Dst: dstGrafanaClient.Client, Verbose: verbose}
-	return migrate.Run()
+	// create destination client
+	dstAWSClient := aws.New(cfg, dstInput.Region)
+	dstGrafana, err := dstInput.CreateGrafanaHTTPClient(ctx, dstAWSClient)
+	if err != nil {
+		return err
+	}
+	defer dstInput.DeleteGrafanaAuth(ctx, dstAWSClient, dstGrafana.Auth)
+
+	migrator := app.App{
+		Src:     app.NewGrafanaClient(srcGrafana.BaseURL, srcGrafana.Auth.GetAuth(), srcGrafana.HTTPClient),
+		Dst:     app.NewGrafanaClient(dstGrafana.BaseURL, dstGrafana.Auth.GetAuth(), dstGrafana.HTTPClient),
+		Verbose: verbose,
+	}
+	return migrator.Run()
 }
 
 // BuildMigrateCmd builds the migrate CLI command
 func BuildMigrateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate",
-		Short: "Discover Managed Grafana workspaces",
-		Long:  "Discover Managed Grafana workspaces",
+		Short: "Migrate Grafana content between workspaces",
+		Long:  "Migrate data sources, dashboards, folders, and alert rules between Grafana workspaces",
 		RunE: runCmdE(func(cmd *cobra.Command, args []string) error {
 			log.Info()
-			src, err := app.NewGrafanaInput(src, srcURL, srcServiceAccountID, srcAPIKey)
+			srcInput, err := app.NewGrafanaInput(src, srcURL, srcServiceAccountID, srcAPIKey)
 			if err != nil {
 				return err
 			}
-			dst, err := app.NewGrafanaInput(dst, "", dstServiceAccountID, "")
+			dstInput, err := app.NewGrafanaInput(dst, "", dstServiceAccountID, "")
 			if err != nil {
 				return err
 			}
-			return migrate(src, dst, verbose)
+			return migrate(srcInput, dstInput, verbose)
 		}),
 	}
 
-	cmd.Flags().StringVarP(&src, "src", "s", "", "Source Grafana workspace")
-	cmd.Flags().StringVarP(&srcServiceAccountID, "src-service-account-id", "", "", "Grafana Service Account ID for source workspace (exclusive with src)")
-	cmd.Flags().StringVarP(&srcURL, "src-url", "", "", "Source Grafana URL (exclusive with src)")
-	cmd.Flags().StringVarP(&srcAPIKey, "src-api-key", "", "", "Source Grafana API Key or Service Account Token (mandatory when using src-url)")
+	cmd.Flags().StringVarP(&src, "src", "s", "", "Source AMG workspace endpoint (e.g. g-xxx.grafana-workspace.us-east-1.amazonaws.com)")
+	cmd.Flags().StringVarP(&srcServiceAccountID, "src-service-account-id", "", "", "Grafana Service Account ID for source workspace")
+	cmd.Flags().StringVarP(&srcURL, "src-url", "", "", "Source Grafana URL (for non-AMG Grafana servers)")
+	cmd.Flags().StringVarP(&srcAPIKey, "src-api-key", "", "", "Source Grafana API Key (required with --src-url)")
 	cmd.MarkFlagsRequiredTogether("src-url", "src-api-key")
 	cmd.MarkFlagsMutuallyExclusive("src-url", "src")
 
-	cmd.Flags().StringVarP(&dst, "dst", "d", "", "Destination Grafana Workspace endpoint")
-	cmd.Flags().StringVarP(&dstServiceAccountID, "dst-service-account-id", "", "", "Grafana Service Account ID for destination workspace (required for v10+ workspaces)")
+	cmd.Flags().StringVarP(&dst, "dst", "d", "", "Destination AMG workspace endpoint")
+	cmd.Flags().StringVarP(&dstServiceAccountID, "dst-service-account-id", "", "", "Grafana Service Account ID for destination workspace (required)")
 	cmd.MarkFlagRequired("dst")
+	cmd.MarkFlagRequired("dst-service-account-id")
+
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose mode")
 	return cmd
 }
